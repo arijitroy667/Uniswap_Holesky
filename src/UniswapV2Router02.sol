@@ -24,20 +24,6 @@ contract UniswapV2VaultReceiverRouter {
     event SwappedETHForUSDC(uint ethAmount, uint usdcAmount);
     event SwapFailed(uint amount, string reason);
 
-    modifier ensure(uint deadline) {
-        require(deadline >= block.timestamp, "Router: EXPIRED");
-        _;
-    }
-    
-    modifier onlyVault() {
-        require(msg.sender == vaultContract, "Only vault can call");
-        _;
-    }
-    
-    modifier onlyReceiver() {
-        require(msg.sender == receiverContract, "Only receiver can call");
-        _;
-    }
 
     constructor(
         address _factory,
@@ -72,7 +58,7 @@ contract UniswapV2VaultReceiverRouter {
         uint usdcAmount,
         uint amountOutMin,
         uint deadline
-    ) external onlyVault ensure(deadline) returns (uint amountOut) {
+    ) external ensure(deadline) returns (uint amountOut) {
         require(usdcAmount > 0, "No USDC to swap");
         
         // Transfer USDC from vault to this contract
@@ -124,7 +110,7 @@ contract UniswapV2VaultReceiverRouter {
     function swapAllETHForUSDC(
         uint amountOutMin,
         uint deadline
-    ) external payable onlyReceiver ensure(deadline) returns (uint amountOut) {
+    ) external payable ensure(deadline) returns (uint amountOut) {
         uint ethAmount = msg.value;
         require(ethAmount > 0, "No ETH to swap");
         
@@ -178,7 +164,7 @@ contract UniswapV2VaultReceiverRouter {
     }
     
     // Recovery functions
-    function recoverUSDC() external onlyVault {
+    function recoverUSDC() external {
         uint usdcBalance = IERC20(USDC).balanceOf(address(this));
         if (usdcBalance > 0) {
             TransferHelper.safeTransfer(USDC, vaultContract, usdcBalance);
